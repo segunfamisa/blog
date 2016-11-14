@@ -386,7 +386,7 @@ We then implement the getQuoteCallback as follows:
     };
 ```
 
-## Bonus: save some time with auth0.
+## Aside: save some time with auth0.
 Phew! if you followed through the steps 0-8, you'll see that securing your apps using JWTs on Android isn't exactly a piece of cake.
 In fact, things can get really complicated and quickly too.
 
@@ -417,6 +417,7 @@ Good news is that you can achieve all of this, in fewer easy steps using auth0's
         compile 'com.auth0.android:lock:2.1.1'
     }
   ```
+
   * Setup credentials
 
   To get it working, we need to setup the credentials in our app. To do this, we set the auth0 domain as well as auth0 client id and also setup the `AndroidManifest.xml`.
@@ -478,7 +479,7 @@ Good news is that you can achieve all of this, in fewer easy steps using auth0's
 
  In the `onCreate` method of your activity, you initialize the auth0 lock library by doing something like:
 
- ```java
+```java
 Auth0 auth0 = new Auth0("YOUR_AUTH0_CLIENT_ID", "YOUR_AUTH0_DOMAIN");
 lock = Lock.newBuilder(auth0, callback)
    //Customize Lock
@@ -486,11 +487,11 @@ lock = Lock.newBuilder(auth0, callback)
 
 //start the lock activity
 startActivity(mLock.newIntent(this));
- ```
+```
 
  We initialize and assign the `callback` as:
 
- ```java
+```java
 private final LockCallback mCallback = new AuthenticationCallback() {
      @Override
      public void onAuthentication(Credentials credentials) {
@@ -507,7 +508,7 @@ private final LockCallback mCallback = new AuthenticationCallback() {
          Toast.makeText(getApplicationContext(), "Log In - Error Occurred", Toast.LENGTH_SHORT).show();
      }
  };
- ```
+```
 
    * For more info about how auth0 can help save time when handling authentication, check out the [quick start](https://auth0.com/docs/quickstart/native/android/00-introduction) and [sample codes](https://github.com/auth0-samples/auth0-android-sample)
 
