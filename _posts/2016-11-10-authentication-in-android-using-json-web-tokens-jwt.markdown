@@ -10,7 +10,7 @@ author:
   avatar: "https://2.gravatar.com/avatar/9ab0b3b080e75e0c03a0c643333f8b93"
 design:
   bg_color: "rgb(150, 194, 49)"
-  image:
+  image: https://i.imgur.com/4ED5Esq.png
 tags:
 - android
 - jwt
@@ -74,7 +74,7 @@ node server.js
 **Note:** the server runs by default at: localhost:3001 by default.
 
 ### 1. Create Project
-Create a new project using Android studio. Go to `File -> New -> New project` and follow the wizard.
+Create a new project using Android studio. Go to `File -> New -> New project` and follow the setup wizard.
 
 ### 2. Add Internet permission
 Since our app will to need to access the internet, we need to add the internet permission to our AndroidManifest.xml file. We will do that by adding the following line:
@@ -103,8 +103,13 @@ dependencies {
 ### 4. Build the Login/Signup UI
 Create a new empty activity and name it `LoginActivity` and the layout file `activity_login.xml` by following the screenshots below:
 
+![Create new activity](https://i.imgur.com/YbK1bMR.png)
+
+![Create new activity details](https://i.imgur.com/RVTXony.png)
 
 The login UI for our app is simple, we have a single layout, but we hide/show fields depending whether the action is to login, as we have in the screenshot below.
+
+![](https://i.imgur.com/qbRjRWn.png)
 
 ### 5. Login & Signup
 Now that we’ve created the UIs, next, we want to make API requests to log the user in, or create a new user. To do this, we send the user’s credentials to the server in a `POST` request and the server sends us a JWT back. We will then use this JWT to access the protected quotes from the great one _Chuck Norris._
@@ -380,3 +385,134 @@ We then implement the getQuoteCallback as follows:
         }
     };
 ```
+
+## Bonus: save some time with auth0.
+Phew! if you followed through the steps 0-8, you'll see that securing your apps using JWTs on Android isn't exactly a piece of cake.
+In fact, things can get really complicated and quickly too.
+
+Good news is that you can achieve all of this, in fewer easy steps using auth0's authentication libraries. Let's take a look at how that can happen with [auth0's Android Lock library](https://github.com/auth0/Lock.Android):
+
+  * Get an account on auth0 at [https://auth0.com/](https://auth0.com/).
+  * Create a new client following the screenshot below:
+  ![Create new client](https://i.imgur.com/RGwBx11.png)
+
+  * Configure callback URLs on the auth0 dashboard
+
+  Select the `Settings` tab in your client dashboard, and configure the callback URL for your app. The callback URL is generated using your auth0 app domain and your app's package name in the format:
+
+  `https://<domain>.auth0.com/android/<app-package-name>/callback`
+
+  See the image below for more information:
+
+  ![Configure callback urls](http://i.imgur.com/PMDd42d.png)
+
+  * Add auth0 dependencies
+
+  Next step, after configuring the app on the dashboard, is to add the auth0 dependencies to your app-module `build.gradle` file:
+
+  ```gradle
+    ...
+    dependencies {
+        ...
+        compile 'com.auth0.android:lock:2.1.1'
+    }
+  ```
+  * Setup credentials
+
+  To get it working, we need to setup the credentials in our app. To do this, we set the auth0 domain as well as auth0 client id and also setup the `AndroidManifest.xml`.
+
+  i. Add the following lines to your `strings.xml` file
+
+  ```xml
+  <resources>
+    ...
+    <string name="auth0_client_id">YOUR AUTH0 CLIENT ID</string>
+    <string name="auth0_domain">YOUR AUTH0 DOMAIN</string>
+  </resources>    
+  ```
+
+  ii. Configure the `AndroidManifest.xml` file
+
+  We need to add the auth0 lock Activity to the manifest file, and setup the credentials we created earlier. To do this, we add the following lines to the <application> tag of our `AndroidManifest.xml` file:
+
+  ```xml
+  <application
+      ...
+      <uses-permission android:name="android.permission.INTERNET" />
+      <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+      >
+      ...
+        <!-- begin auth0 lock activity -->
+        <activity
+            android:name="com.auth0.android.lock.LockActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:theme="@style/Lock.Theme">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="@string/auth0_domain"
+                    android:pathPrefix="/android/<PACKAGE NAME>/callback"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
+        <!-- end lock activity -->
+
+        <!-- begin auth0 webauth activity -->
+        <activity
+            android:name="com.auth0.android.provider.WebAuthActivity"
+            android:theme="@style/Lock.Theme" />
+        <!-- end auth0 webauth activity -->
+  </application>
+  ```
+
+  * Retrieve token
+
+  Now that we've configured all we need to configure, next step is to log the user in and retrieve a token for the user.
+ To do this, we make use of the lock library.
+
+ In the `onCreate` method of your activity, you initialize the auth0 lock library by doing something like:
+
+ ```java
+Auth0 auth0 = new Auth0("YOUR_AUTH0_CLIENT_ID", "YOUR_AUTH0_DOMAIN");
+lock = Lock.newBuilder(auth0, callback)
+   //Customize Lock
+   .build(this);
+
+//start the lock activity
+startActivity(mLock.newIntent(this));
+ ```
+
+ We initialize and assign the `callback` as:
+
+ ```java
+private final LockCallback mCallback = new AuthenticationCallback() {
+     @Override
+     public void onAuthentication(Credentials credentials) {
+         // save credentials and navigate to protected activity
+     }
+
+     @Override
+     public void onCanceled() {
+         Toast.makeText(getApplicationContext(), "Log In - Cancelled", Toast.LENGTH_SHORT).show();
+     }
+
+     @Override
+     public void onError(LockException error) {
+         Toast.makeText(getApplicationContext(), "Log In - Error Occurred", Toast.LENGTH_SHORT).show();
+     }
+ };
+ ```
+
+   * For more info about how auth0 can help save time when handling authentication, check out the [quick start](https://auth0.com/docs/quickstart/native/android/00-introduction) and [sample codes](https://github.com/auth0-samples/auth0-android-sample)
+
+
+## Conclusion
+
+As we have seen, authentication is a really important part of our apps.
+We have seen and learnt what JWTs are made up of and how to implement them in Android. JWT helps to protect resources by ensuring that the user requesting for these resources are who they say they are. While doing this, JWTs also allow us transfer information between the server and the app using the `claim` fields in the JWT.
