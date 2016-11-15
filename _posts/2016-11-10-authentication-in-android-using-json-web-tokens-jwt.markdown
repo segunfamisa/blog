@@ -17,46 +17,30 @@ tags:
 - authentication
 ---
 
-**TL;DR summary:** Authentication is a big deal for your app. JWT allows you safely transfer information between your app and server and helps you identify who’s making the requests. This post shows how to implement JWT in your native Android app. If you’re in a hurry and just want to dive in code, clone the final code from the [Github repository](https://github.com/segunfamisa/android-jwt-authentication).
+**TL;DR:** Authentication is a big deal for your app. JWT allows you safely transfer information between your app and server and helps you identify who’s making the requests. This post shows how to implement JWT in your native Android app. If you’re in a hurry and just want to dive into the code, clone the final project from the [Github repository](https://github.com/segunfamisa/android-jwt-authentication).
 
 ---
 
 ## Introduction
 
-Authentication is an important part of applications that involves the need to establish identity of an entity requesting information before honouring such requests. There are quite a number of techniques, protocols, standards of authenticating users in your app.
+Authentication is an important part of applications that involve the need to establish identity of an entity requesting information before honouring such requests. There are quite a number of techniques, protocols and standards of authenticating users in your app.
 
-A [JSON Web Token (JWT)](https://tools.ietf.org/html/rfc7519) is a standard way of representing information (referred to as claims) to be transferred between two parties. JWTs are commonly used for authentication purposes because it enables your server identify that a user is who they say they are before serving their requests for resources. It also provides a way of  securely transferring information.
+A [JSON Web Token (JWT)](https://tools.ietf.org/html/rfc7519) is a standard way of representing information (referred to as claims) to be transferred between two parties. JWTs are commonly used for authentication purposes because they enable your server identify that a user is who they say they are before serving their requests for resources. They also provide a way of securely transferring information.
 
-If you already know the parts that make up a JWT, you can dive straight into how to implement JWT in your native Android app.
+If you already know about the anatomy of a JWT, you can dive straight into how to implement JWTs in your native Android app. Otherwise if you need more information on JWTs, you can check out [this introduction](https://jwt.io/introduction/) or get a copy of [Auth0's free JWT e-book](https://auth0.com/e-books/jwt-handbook)
 
-A typical JWT has three parts, delimited by dots (`.`), in the format: **_`header.payload.signature`_**
-
-
-The **_header_** part of a JWT contains information related to the type of token and the algorithm used to generate it. Examples of the algorithms include [HMAC SHA 256](https://tools.ietf.org/html/rfc4868), [HMAC SHA 512](https://tools.ietf.org/html/rfc4868) among others. This part is formed by doing a [Base64](https://tools.ietf.org/html/rfc4648) encoding of the JSON string containing the information above.
-
-
-The **_payload_** is like the “body” of the JWT and contains the claims to be transferred. Claims are information about the entity and which may be used to identify the entity making the request. For example, your claim could be the name of the user using the app or/and the role of such user.
-The payload part is formed by doing a Base64 encoding of the JSON string that contains such information.
-
-
-The **_signature_** is the 3rd part and it is built by concatenating the encoded forms of the header and the payload by a dot (.) and signing with the algorithm specified in the header, using a secret.
-
-
-Stringing all three parts together like `header.payload.signature` gives us a JSON Web Token, which we can now go ahead and use in applications.
-
-This is just a quick intro into the structure of a JWT, be sure to check out https://jwt.io/ for more information on JWTs.
 
 ## Implementing JWTs on Android
 
-Now that we know what exactly a JWT is, and how we can build one, let’s go ahead and build an Android app that requires JWT for authentication.
+Now that we know exactly what a JWT is and how we can build one, let’s go ahead and build an Android app that requires JWT for authentication.
 
-We’re going to use the [NodeJS JWT Authentication API](https://github.com/auth0-blog/nodejs-jwt-authentication-sample) to build an app that can allow a user sign up or login and then get exclusive protected quotes from the great Chuck Norris.
+We’re going to use the [NodeJS JWT Authentication API](https://github.com/auth0-blog/nodejs-jwt-authentication-sample) to build an app that can allow a user sign up or log in and then get exclusive protected quotes from the great Chuck Norris.
 
 Fun quote:
 >_When Chuck Norris does a pushup, he isn’t lifting himself up, he’s pushing the Earth down :D_
 
-### 0. Setup
-Anyway, let’s get started, but before you do that, be sure you have the following requirements:
+### 0. Set Up
+Anyway, let’s get started. Before we start, be sure you have the following requirements:
 
   * [Android Studio (1.5 or above)](https://developer.android.com/studio/index.html)
   * Emulator running API 15 or above.
@@ -71,22 +55,22 @@ npm install
 node server.js
 ```
 
-**Note:** the server runs by default at: localhost:3001 by default.
+**Note:** the server runs at localhost:3001 by default.
 
 ### 1. Create Project
-Create a new project using Android studio. Go to `File -> New -> New project` and follow the setup wizard.
+Create a new project using Android Studio. Go to `File -> New -> New project` and follow the setup wizard.
 
-### 2. Add Internet permission
-Since our app will to need to access the internet, we need to add the internet permission to our AndroidManifest.xml file. We will do that by adding the following line:
+### 2. Add Internet Permission
+Since our app will to need to access the internet, we need to add the internet permission to our `AndroidManifest.xml` file. We will do that by adding the following line:
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 ```
 
-### 3. Add dependencies
-We’ll be using a couple of dependencies for this app. Some of which includes [OkHttp](http://square.github.io/okhttp/) - one of the most popular Http clients in Android and [Gson](https://github.com/google/gson), a library to deserialize JSON strings into Java objects and serialize Java objects into JSON strings.
+### 3. Add Dependencies
+We’ll be using a couple of dependencies for this app including [OkHttp](http://square.github.io/okhttp/) - one of the most popular Http clients in Android and [Gson](https://github.com/google/gson) - a library to deserialize JSON strings into Java objects and serialize Java objects into JSON strings.
 
-We will also be using auth0’s [JWT library for Java](https://github.com/auth0/java-jwt), to avoid writing boilerplate code when we need to verify our JWT.
+We will also be using [Auth0’s JWT library for Java](https://github.com/auth0/java-jwt) to avoid writing boilerplate code when we need to verify our JWT.
 
 To add these dependencies, navigate to your app-module’s build.gradle file (`<project-name>/<app-module>/build.gradle`) and add the following lines to your `dependencies` block:
 
@@ -101,20 +85,24 @@ dependencies {
 ```
 
 ### 4. Build the Login/Signup UI
-Create a new empty activity and name it `LoginActivity` and the layout file `activity_login.xml` by following the screenshots below:
+Create a new empty activity and name it `LoginActivity` and the layout file `activity_login.xml`.
 
-![Create new activity](https://i.imgur.com/YbK1bMR.png)
+To do this, right click on the root package and go to `New -> Activity -> Empty Activity` and follow the setup wizard.
+Type in the names for the activity and layout file accordingly and click `Finish`.
 
-![Create new activity details](https://i.imgur.com/RVTXony.png)
+The wizard windows are shown in the screenshots below:
+![Create a new activity](https://i.imgur.com/YbK1bMR.png "Create a new activity")
+
+![New Android Activity](https://i.imgur.com/RVTXony.png "New Android Activity")
 
 The login UI for our app is simple, we have a single layout, but we hide/show fields depending whether the action is to login, as we have in the screenshot below.
 
-![](https://i.imgur.com/qbRjRWn.png)
+![Login and Signup UI](https://i.imgur.com/qbRjRWn.png "Login and Signup UI")
 
 ### 5. Login & Signup
-Now that we’ve created the UIs, next, we want to make API requests to log the user in, or create a new user. To do this, we send the user’s credentials to the server in a `POST` request and the server sends us a JWT back. We will then use this JWT to access the protected quotes from the great one _Chuck Norris._
+Now that we’ve created the UIs, next we want to make API requests to log the user in or create a new user. To do this, we send the user’s credentials to the server in a `POST` request and the server sends us a JWT back. We will then use this JWT to access the protected quotes from the great one _Chuck Norris._
 
-  * Since we’re using OkHttp to make requests and Gson to deserialize the JSON response into JSON objects, we need to create the Java class to match the JSON response for login and sign up.
+  Since we’re using OkHttp to make requests and Gson to deserialize the JSON response into JSON objects, we need to create the Java class to match the JSON response for login and signup.
 
   We can do this using [http://www.jsonschema2pojo.org/](http://www.jsonschema2pojo.org/) or we can manually build that class. Either way we choose, we end up with a class looking like:
 
@@ -128,7 +116,7 @@ public class Token {
    }
 }
 ```
-  * We also need to create a Callback interface that we’ll implement in order to retrieve the response from a successful network call or an error.
+  We also need to create a Callback interface that we’ll implement in order to retrieve the response from a successful network call or an error.
 
 ```java
 /**
@@ -142,76 +130,76 @@ public class Token {
  }
 ```
 
-  * To make the request to log the user in, let’s create a method that accepts a username, password and a callback we will implement to retrieve the JWT when the call is successful. The following block of code explains how this is done:
+  To make the request to log the user in, let’s create a method that accepts a username, password and a callback we will implement to retrieve the JWT when the call is successful. The following block of code explains how this is done:
 
 ```java
-  private void doLogin(String username, String password, final Callback callback) {
-     String url = "http://10.0.2.2:3001/sessions/create";
-     HttpUrl httpUrl = HttpUrl.parse(url);
+private void doLogin(String username, String password, final Callback callback) {
+ String url = "http://10.0.2.2:3001/sessions/create";
+ HttpUrl httpUrl = HttpUrl.parse(url);
 
-     // create the request body
-     FormBody.Builder body = new FormBody.Builder();
-     body.addEncoded("username", username);
-     body.addEncoded("password", password);
+ // create the request body
+ FormBody.Builder body = new FormBody.Builder();
+ body.addEncoded("username", username);
+ body.addEncoded("password", password);
 
-     // create the request
-     Request request = new Request.Builder()
-             .url(httpUrl)
-             .post(body.build())
-             .build();
+ // create the request
+ Request request = new Request.Builder()
+         .url(httpUrl)
+         .post(body.build())
+         .build();
 
-     // create client and make a call
-     OkHttpClient client = new OkHttpClient();
-     client.newCall(request)
-             .enqueue(new okhttp3.Callback() {
-                 // get a handler for the UI thread
-                 Handler mainHandler = new Handler(Looper.getMainLooper());
-                 @Override
-                 public void onFailure(Call call, final IOException e) {
-                     if (callback != null) {
+ // create client and make a call
+ OkHttpClient client = new OkHttpClient();
+ client.newCall(request)
+         .enqueue(new okhttp3.Callback() {
+             // get a handler for the UI thread
+             Handler mainHandler = new Handler(Looper.getMainLooper());
+             @Override
+             public void onFailure(Call call, final IOException e) {
+                 if (callback != null) {
+                     mainHandler.post(new Runnable() {
+                         @Override
+                         public void run() {
+                             // invoke error callback in case of error
+                             callback.onError(e.toString());
+                         }
+                     });
+                 }
+             }
+
+             @Override
+             public void onResponse(final Call call, final Response response) {
+                 if(callback != null) {
+                     try {
+                         final String stringResponse = response.body().string();
+
+                         // use gson to serialize the string respones to a java object
+                         final Token token = new Gson().fromJson(stringResponse, Token.class);
                          mainHandler.post(new Runnable() {
                              @Override
                              public void run() {
-                                 // invoke error callback in case of error
-                                 callback.onError(e.toString());
+                                 // invoke response callback in case of successful response
+                                 callback.onResponse(token);
+                             }
+                         });
+                     } catch (final IOException ioe) {
+                         mainHandler.post(new Runnable() {
+                             @Override
+                             public void run() {
+                                 callback.onError(ioe.toString());
                              }
                          });
                      }
                  }
-
-                 @Override
-                 public void onResponse(final Call call, final Response response) {
-                     if(callback != null) {
-                         try {
-                             final String stringResponse = response.body().string();
-
-                             // use gson to serialize the string respones to a java object
-                             final Token token = new Gson().fromJson(stringResponse, Token.class);
-                             mainHandler.post(new Runnable() {
-                                 @Override
-                                 public void run() {
-                                     // invoke response callback in case of successful response
-                                     callback.onResponse(token);
-                                 }
-                             });
-                         } catch (final IOException ioe) {
-                             mainHandler.post(new Runnable() {
-                                 @Override
-                                 public void run() {
-                                     callback.onError(ioe.toString());
-                                 }
-                             });
-                         }
-                     }
-                 }
-             });
-  }
+             }
+         });
+}
 ```
 
 **Note:**  
 
   * We use the `Looper.getMainHandler()` to be able to post updates to the main thread, since we are likely going to update the UI from a background thread.
-  * 10.0.2.2 is used here instead of 'localhost' because that's the IP Address through which an emulator can access the localhost of the host machine. If you are testing on a real Android device, you can use the local IP Address of the development machine (like 192.168.0.2), but your phone must be connected to the same network.
+  * 10.0.2.2 is used here instead of 'localhost' because that's the IP address through which an emulator can access the localhost of the host machine. If you are testing on a real Android device, you can use the local IP address of the development machine (like 192.168.0.2), but your phone must be connected to the same network.
 
 To use this `doLogin()` method, we will call it in the `onClick` of the login button:
 
@@ -252,7 +240,7 @@ Callback loginCallback = new Callback<Token>() {
 }
 ```
 
-**Note:** for sign up, we do something similar, the only difference being the addition of an extra parameter “extra” according to the API.
+**Note:** for signup, we do something similar, the only difference being the addition of an extra parameter “extra” according to the API.
 
 ### 6. Build the Quotes UI
 The UI for the Quotes is pretty simple. We just want a `TextView` to show the welcome message, to personalize the experience, a `TextView` to display the quote, and a `Button` to fetch a new quote.
@@ -260,15 +248,15 @@ To do this, create an activity similar to how we did in step 4 above. The screen
 
 The XML code to create this UI is as we have in the [repository](https://github.com/segunfamisa/android-jwt-authentication/blob/master/app/src/main/res/layout/activity_quotes.xml).
 
-### 7. Get username claim from JWT
-Now we have our UI setup, and we have the JWT for the session. Next thing we want to do is retrieve the `username` claim from the JWT and use it in a welcome message.
+### 7. Get Username Claim from JWT
+Now we have our UI set up and we have the JWT for the session. Next thing we want to do is retrieve the `username` claim from the JWT and use it in a welcome message.
 To do this, we will make use of the JWT Java library that we added earlier.
 
-We can achieve this using the `JWTVerifier` class. We create an object of the class, passing the encryption secret as a parameter, and then calling the `verify()` method.
+We can achieve this using the `JWTVerifier` class. We create an object of the class, passing the encryption secret as a parameter, and then calling the `verify()` method. The secret for our sample server is `ngEurope rocks` and it can be found in the server's [config.json](https://github.com/auth0-blog/nodejs-jwt-authentication-sample/blob/master/config.json) file
 
 ```java
 private String getUsernameFromJWT(String token) {
-    private String secret = ""; // secret is what was used to create the JWT on the server side.
+    private String secret = "ngEurope rocks"; // secret is what was used to create the JWT on the server side.
     JWTVerifier verifier = new JWTVerifier(secret);
     try {
         Map<String, Object> claims = verifier.verify(token);
@@ -288,10 +276,10 @@ We can now set the username that was retrieved on the welcome `TextView` like:
 mWelcomeText.setText(String.format("Welcome, %s", getUsernameFromJWT()));
 ```
 
-### 8. Get protected quotes
-Next thing we want to do is request for protected quotes using the JWT we received and saved in step 5 above.
+### 8. Get Protected Quotes
+Next thing we want to do is make a request for protected quotes using the JWT we received and saved in step 5 above.
 
-To fetch a protected quote, we make a GET request to `/api/protected/random-quote` while supplying the JWT in the `Authorization` field of the header in the format: `Authorization: Bearer <JWT>`.
+To fetch a protected quote, we make a `GET` request to `/api/protected/random-quote` while supplying the JWT in the `Authorization` field of the header in the format: `Authorization: Bearer <JWT>`.
 
 To implement this, we will need a method like:
 
@@ -386,98 +374,103 @@ We then implement the getQuoteCallback as follows:
     };
 ```
 
-## Aside: save some time with auth0.
+## Aside: Save Some Time with Auth0.
 Phew! if you followed through the steps 0-8, you'll see that securing your apps using JWTs on Android isn't exactly a piece of cake.
 In fact, things can get really complicated and quickly too.
 
-Good news is that you can achieve all of this, in fewer easy steps using auth0's authentication libraries. Let's take a look at how that can happen with [auth0's Android Lock library](https://github.com/auth0/Lock.Android):
+The good news is that you can achieve all of this, in fewer easy steps using auth0's authentication libraries. Let's take a look at how that can happen with [Auth0's Android Lock library](https://github.com/auth0/Lock.Android):
 
-  * Get an account on auth0 at [https://auth0.com/](https://auth0.com/).
-  * Create a new client following the screenshot below:
-  ![Create new client](https://i.imgur.com/RGwBx11.png)
+### Get an Account on Auth0
+First thing to do is to create an Auth0 account. Go to [https://auth0.com/](https://auth0.com/) to do that.
 
-  * Configure callback URLs on the auth0 dashboard
+### Create a New Client
+After creating an account, you will be redirected to the [dashboard](https://manage.auth0.com). To create a new client, click on `New Client`, enter the name for the app and choose `Native` as the client type.
+Click `Create` to complete the process.
 
-  Select the `Settings` tab in your client dashboard, and configure the callback URL for your app. The callback URL is generated using your auth0 app domain and your app's package name in the format:
+![Create new client](https://i.imgur.com/RGwBx11.png "Create new client")
 
-  `https://<domain>.auth0.com/android/<app-package-name>/callback`
+### Configure callback URLs on the Auth0 dashboard
+Select the `Settings` tab in your client dashboard, and configure the callback URL for your app. The callback URL is generated using your Auth0 app domain and your app's package name in the format:
 
-  See the image below for more information:
+`https://<domain>.auth0.com/android/<app-package-name>/callback` .
 
-  ![Configure callback urls](http://i.imgur.com/PMDd42d.png)
+Add the callback URL into the `Allowed Callback URLs` field in the `Settings` tab and click on `Save Changes`.
 
-  * Add auth0 dependencies
+See the image below for more information:
 
-  Next step, after configuring the app on the dashboard, is to add the auth0 dependencies to your app-module `build.gradle` file:
+![Configure callback URLs](http://i.imgur.com/PMDd42d.png "Configure callback URLs")
 
-  ```gradle
+### Add Auth0 Dependencies
+
+The next step after configuring the app on the dashboard is to add the Auth0 dependencies to your app-module `build.gradle` file:
+
+```gradle
+...
+dependencies {
     ...
-    dependencies {
-        ...
-        compile 'com.auth0.android:lock:2.1.1'
-    }
-  ```
+    compile 'com.auth0.android:lock:2.1.1'
+}
+```
 
-  * Setup credentials
+### Set Up Credentials
 
-  To get it working, we need to setup the credentials in our app. To do this, we set the auth0 domain as well as auth0 client id and also setup the `AndroidManifest.xml`.
+To get it working, we need to set up the credentials in our app. To do this, we set the Auth0 domain as well as Auth0 client id and also set up the `AndroidManifest.xml`.
 
-  i. Add the following lines to your `strings.xml` file
+  Add the following lines to your `strings.xml` file
 
-  ```xml
-  <resources>
+```xml
+<resources>
     ...
     <string name="auth0_client_id">YOUR AUTH0 CLIENT ID</string>
     <string name="auth0_domain">YOUR AUTH0 DOMAIN</string>
-  </resources>    
-  ```
+</resources>    
+```
 
-  ii. Configure the `AndroidManifest.xml` file
+  Configure the `AndroidManifest.xml` file
 
-  We need to add the auth0 lock Activity to the manifest file, and setup the credentials we created earlier. To do this, we add the following lines to the <application> tag of our `AndroidManifest.xml` file:
+We need to add the Auth0 Lock Activity to the manifest file, and setup the credentials we created earlier. To do this, we add the following lines to the `<application>` tag of our `AndroidManifest.xml` file:
 
-  ```xml
-  <application
-      ...
-      <uses-permission android:name="android.permission.INTERNET" />
-      <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-      >
-      ...
-        <!-- begin auth0 lock activity -->
-        <activity
-            android:name="com.auth0.android.lock.LockActivity"
-            android:label="@string/app_name"
-            android:launchMode="singleTask"
-            android:screenOrientation="portrait"
-            android:theme="@style/Lock.Theme">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
+```xml
+<application
+  ...
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  >
+  ...
+    <!-- begin auth0 lock activity -->
+    <activity
+        android:name="com.auth0.android.lock.LockActivity"
+        android:label="@string/app_name"
+        android:launchMode="singleTask"
+        android:screenOrientation="portrait"
+        android:theme="@style/Lock.Theme">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
 
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                    android:host="@string/auth0_domain"
-                    android:pathPrefix="/android/<PACKAGE NAME>/callback"
-                    android:scheme="https" />
-            </intent-filter>
-        </activity>
-        <!-- end lock activity -->
+            <data
+                android:host="@string/auth0_domain"
+                android:pathPrefix="/android/<PACKAGE NAME>/callback"
+                android:scheme="https" />
+        </intent-filter>
+    </activity>
+    <!-- end lock activity -->
 
-        <!-- begin auth0 webauth activity -->
-        <activity
-            android:name="com.auth0.android.provider.WebAuthActivity"
-            android:theme="@style/Lock.Theme" />
-        <!-- end auth0 webauth activity -->
-  </application>
-  ```
+    <!-- begin auth0 webauth activity -->
+    <activity
+        android:name="com.auth0.android.provider.WebAuthActivity"
+        android:theme="@style/Lock.Theme" />
+    <!-- end auth0 webauth activity -->
+</application>
+```
 
-  * Retrieve token
+### Retrieve Token
+Now that we've configured everything necessary, the next step is to log the user in and retrieve a token for the user.
+To do this, we make use of the Auth0 Android Lock library.
 
-  Now that we've configured all we need to configure, next step is to log the user in and retrieve a token for the user.
- To do this, we make use of the lock library.
-
- In the `onCreate` method of your activity, you initialize the auth0 lock library by doing something like:
+In the `onCreate` method of your activity, you initialize the Auth0 Android Lock library by doing something like:
 
 ```java
 Auth0 auth0 = new Auth0("YOUR_AUTH0_CLIENT_ID", "YOUR_AUTH0_DOMAIN");
@@ -489,7 +482,7 @@ lock = Lock.newBuilder(auth0, callback)
 startActivity(mLock.newIntent(this));
 ```
 
- We initialize and assign the `callback` as:
+We initialize and assign the `callback` as:
 
 ```java
 private final LockCallback mCallback = new AuthenticationCallback() {
@@ -510,10 +503,12 @@ private final LockCallback mCallback = new AuthenticationCallback() {
  };
 ```
 
-   * For more info about how auth0 can help save time when handling authentication, check out the [quick start](https://auth0.com/docs/quickstart/native/android/00-introduction) and [sample codes](https://github.com/auth0-samples/auth0-android-sample)
+  For more info about how Auth0 can help save time when handling authentication, check out the [Auth0 Android Quickstart](https://auth0.com/docs/quickstart/native/android/00-introduction) and [sample code](https://github.com/auth0-samples/auth0-android-sample).
 
 
 ## Conclusion
 
 As we have seen, authentication is a really important part of our apps.
-We have seen and learnt what JWTs are made up of and how to implement them in Android. JWT helps to protect resources by ensuring that the user requesting for these resources are who they say they are. While doing this, JWTs also allow us transfer information between the server and the app using the `claim` fields in the JWT.
+We have seen and learnt what JWTs are made up of and how to implement them in Android. JWT helps to protect resources by ensuring that the user requesting these resources are who they say they are. While doing this, JWTs also allow us transfer information between the server and the app using the `claim` fields in the JWT.
+
+I hope with this post, you have a better understanding of how to secure your native Android apps with JWTs and you are ready to implement it in your apps.
