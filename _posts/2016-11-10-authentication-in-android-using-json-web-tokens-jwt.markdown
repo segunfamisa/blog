@@ -42,7 +42,7 @@ Fun quote:
 ### 0. Set Up
 Anyway, let’s get started. Before we start, be sure you have the following requirements:
 
-  * [Android Studio (1.5 or above)](https://developer.android.com/studio/index.html)
+  * [Android Studio (2.0 or above)](https://developer.android.com/studio/index.html)
   * Emulator running API 15 or above.
 
 We also need to set up the API server and to do that, go ahead and clone the server repository [here](https://github.com/auth0-blog/nodejs-jwt-authentication-sample) and start it.
@@ -61,7 +61,7 @@ node server.js
 Create a new project using Android Studio. Go to `File -> New -> New project` and follow the setup wizard.
 
 ### 2. Add Internet Permission
-Since our app will to need to access the internet, we need to add the internet permission to our `AndroidManifest.xml` file. We will do that by adding the following line:
+Since our app will need to access the internet, we need to add the internet permission to our `AndroidManifest.xml` file. We will do that by adding the following line:
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
@@ -70,7 +70,7 @@ Since our app will to need to access the internet, we need to add the internet p
 ### 3. Add Dependencies
 We’ll be using a couple of dependencies for this app including [OkHttp](http://square.github.io/okhttp/) - one of the most popular Http clients in Android and [Gson](https://github.com/google/gson) - a library to deserialize JSON strings into Java objects and serialize Java objects into JSON strings.
 
-We will also be using [Auth0’s JWT library for Java](https://github.com/auth0/java-jwt) to avoid writing boilerplate code when we need to verify our JWT.
+We will also be using [Auth0’s "jwtdecode" library for Android](https://github.com/auth0/JWTDecode.Android) to avoid writing boilerplate code when we need to decode our JWT and retrieve claims.
 
 To add these dependencies, navigate to your app-module’s build.gradle file (`<project-name>/<app-module>/build.gradle`) and add the following lines to your `dependencies` block:
 
@@ -78,7 +78,7 @@ To add these dependencies, navigate to your app-module’s build.gradle file (`<
 ...
 dependencies {
     ...
-    compile 'com.auth0:java-jwt:2.2.1'
+    compile 'com.auth0.android:jwtdecode:1.0.0'
     compile 'com.squareup.okhttp3:okhttp:3.4.1'
     compile 'com.google.code.gson:gson:2.4'
 }
@@ -95,7 +95,7 @@ The wizard windows are shown in the screenshots below:
 
 ![New Android Activity](https://i.imgur.com/RVTXony.png "New Android Activity")
 
-The login UI for our app is simple, we have a single layout, but we hide/show fields depending whether the action is to login, as we have in the screenshot below.
+The login UI for our app is simple. We have a single layout but we hide/show fields depending whether the action is to log in or sign up, as we have in the screenshot below.
 
 ![Login and Signup UI](https://i.imgur.com/qbRjRWn.png "Login and Signup UI")
 
@@ -199,7 +199,8 @@ private void doLogin(String username, String password, final Callback callback) 
 **Note:**  
 
   * We use the `Looper.getMainHandler()` to be able to post updates to the main thread, since we are likely going to update the UI from a background thread.
-  * 10.0.2.2 is used here instead of 'localhost' because that's the IP address through which an emulator can access the localhost of the host machine. If you are testing on a real Android device, you can use the local IP address of the development machine (like 192.168.0.2), but your phone must be connected to the same network.
+  * `10.0.2.2` is used here instead of `localhost` because that's the IP address through which an emulator can access the localhost of the host machine. If you are testing on a real Android device, you can use the local IP address of the development machine (like 192.168.0.2), but your phone must be connected to the same network.
+  * For [Genymotion](https://genymotion.com/) users, make use of `10.0.3.2` instead.
 
 To use this `doLogin()` method, we will call it in the `onClick` of the login button:
 
@@ -223,7 +224,7 @@ We then implement the Callback like:
 Callback loginCallback = new Callback<Token>() {
     @Override
     public void onResponse(@NonNull Token response) {
-        // save token to shared preferences and navigate to the quotes activity
+        // save token and navigate to the quotes activity
         saveToken(response);
         startActivity(new Intent(LoginActivity.this, QuotesActivity.class));
     }
@@ -246,22 +247,23 @@ Callback loginCallback = new Callback<Token>() {
 The UI for the Quotes is pretty simple. We just want a `TextView` to show the welcome message, to personalize the experience, a `TextView` to display the quote, and a `Button` to fetch a new quote.
 To do this, create an activity similar to how we did in step 4 above. The screenshot below shows the UI we're trying to achieve.
 
+![Quotes UI](https://i.imgur.com/sJRkfYi.png "Quotes UI")
+
 The XML code to create this UI is as we have in the [repository](https://github.com/segunfamisa/android-jwt-authentication/blob/master/app/src/main/res/layout/activity_quotes.xml).
 
 ### 7. Get Username Claim from JWT
 Now we have our UI set up and we have the JWT for the session. Next thing we want to do is retrieve the `username` claim from the JWT and use it in a welcome message.
-To do this, we will make use of the JWT Java library that we added earlier.
+We can achieve this using the [Auth0 jwtdecode](https://github.com/auth0/JWTDecode.Android) library we added in step 3 above.
 
-We can achieve this using the `JWTVerifier` class. We create an object of the class, passing the encryption secret as a parameter, and then calling the `verify()` method. The secret for our sample server is `ngEurope rocks` and it can be found in the server's [config.json](https://github.com/auth0-blog/nodejs-jwt-authentication-sample/blob/master/config.json) file
+We create an object of the [JWT](https://github.com/auth0/JWTDecode.Android/blob/master/lib/src/main/java/com/auth0/android/jwt/JWT.java) class, by passing the token as a parameter. We retrieve the username `Claim` object by calling the `getClaim()` method with the "username" as parameter. We can then convert the [Claim](https://github.com/auth0/JWTDecode.Android/blob/master/lib/src/main/java/com/auth0/android/jwt/Claim.java) to String using the `asString()` method.
 
 ```java
-private String getUsernameFromJWT(String token) {
-    private String secret = "ngEurope rocks"; // secret is what was used to create the JWT on the server side.
-    JWTVerifier verifier = new JWTVerifier(secret);
+private String decodeUsername(String token) {
+    JWT jwt = new JWT(token);
     try {
-        Map<String, Object> claims = verifier.verify(token);
-        if (claims != null && claims.containsKey("username")) {
-            return claims.get("username").toString();
+        Claim usernameClaim = jwt.getClaim("username");
+        if (usernameClaim != null) {
+            return usernameClaim.asString();
         }
     } catch (Exception e) {
         e.printStackTrace();
@@ -277,7 +279,7 @@ mWelcomeText.setText(String.format("Welcome, %s", getUsernameFromJWT()));
 ```
 
 ### 8. Get Protected Quotes
-Next thing we want to do is make a request for protected quotes using the JWT we received and saved in step 5 above.
+Next thing we want to do is make a request for protected quotes using the JWT we received and saved in step 5 above. The server will use the JWT to establish the identity of the user, before serving the request.
 
 To fetch a protected quote, we make a `GET` request to `/api/protected/random-quote` while supplying the JWT in the `Authorization` field of the header in the format: `Authorization: Bearer <JWT>`.
 
@@ -353,6 +355,11 @@ This method is then called in the `onClick` method of the get quote button:
     });
 ```
 
+**Note**
+
+  * Please note that using [Context.MODE_PRIVATE](https://developer.android.com/reference/android/content/Context.html#MODE_PRIVATE) is preferred when working with SharedPreferences as this makes the storage private to your application.
+  * Also, [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences.html) is not recommended for saving tokens as they are stored as plain text key-value pairs.
+
 We then implement the getQuoteCallback as follows:
 
 ```java
@@ -378,7 +385,7 @@ We then implement the getQuoteCallback as follows:
 Phew! if you followed through the steps 0-8, you'll see that securing your apps using JWTs on Android isn't exactly a piece of cake.
 In fact, things can get really complicated and quickly too.
 
-The good news is that you can achieve all of this, in fewer easy steps using auth0's authentication libraries. Let's take a look at how that can happen with [Auth0's Android Lock library](https://github.com/auth0/Lock.Android):
+The good news is that you can achieve all of this, in fewer easy steps using Auth0's authentication libraries. Let's take a look at how that can happen with [Auth0's Android Lock library](https://github.com/auth0/Lock.Android):
 
 ### Get an Account on Auth0
 First thing to do is to create an Auth0 account. Go to [https://auth0.com/](https://auth0.com/) to do that.
@@ -408,7 +415,7 @@ The next step after configuring the app on the dashboard is to add the Auth0 dep
 ...
 dependencies {
     ...
-    compile 'com.auth0.android:lock:2.1.1'
+    compile 'com.auth0.android:lock:2.2.1'
 }
 ```
 
@@ -452,19 +459,18 @@ We need to add the Auth0 Lock Activity to the manifest file, and setup the crede
 
             <data
                 android:host="@string/auth0_domain"
-                android:pathPrefix="/android/<PACKAGE NAME>/callback"
+                android:pathPrefix="/android/<PACKAGE_NAME>/callback"
                 android:scheme="https" />
         </intent-filter>
     </activity>
     <!-- end lock activity -->
-
-    <!-- begin auth0 webauth activity -->
-    <activity
-        android:name="com.auth0.android.provider.WebAuthActivity"
-        android:theme="@style/Lock.Theme" />
-    <!-- end auth0 webauth activity -->
 </application>
 ```
+
+**Note**
+
+  * Make sure the `LockActivity`'s launchMode is declared as "singleTask" or the result won't come back in the authentication.
+  * Replace `PACKAGE_NAME` in the `pathPrefix` attribute with the actual package name for your app so that the Callback Uri can be called from Auth0 servers.
 
 ### Retrieve Token
 Now that we've configured everything necessary, the next step is to log the user in and retrieve a token for the user.
@@ -473,13 +479,19 @@ To do this, we make use of the Auth0 Android Lock library.
 In the `onCreate` method of your activity, you initialize the Auth0 Android Lock library by doing something like:
 
 ```java
-Auth0 auth0 = new Auth0("YOUR_AUTH0_CLIENT_ID", "YOUR_AUTH0_DOMAIN");
-lock = Lock.newBuilder(auth0, callback)
-   //Customize Lock
-   .build(this);
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_login);
 
-//start the lock activity
-startActivity(mLock.newIntent(this));
+    Auth0 auth0 = new Auth0(getString(R.string.auth0_client_id), getString(R.string.auth0_domain));
+    mLock = Lock.newBuilder(auth0, mCallback)
+            //Customize Lock
+            .build(this);
+
+    //start the lock activity
+    startActivity(mLock.newIntent(this));
+}
 ```
 
 We initialize and assign the `callback` as:
@@ -501,6 +513,16 @@ private final LockCallback mCallback = new AuthenticationCallback() {
          Toast.makeText(getApplicationContext(), "Log In - Error Occurred", Toast.LENGTH_SHORT).show();
      }
  };
+```
+
+To prevent memory leak, you should destroy the `mLock` instance by calling `mLock.onDestroy(this)` in the Activity's `onDestroy()` method as we have below:
+
+```java
+@Override
+public void onDestroy() {
+    super.onDestroy();
+    mLock.onDestroy(this);
+}
 ```
 
   For more info about how Auth0 can help save time when handling authentication, check out the [Auth0 Android Quickstart](https://auth0.com/docs/quickstart/native/android/00-introduction) and [sample code](https://github.com/auth0-samples/auth0-android-sample).
