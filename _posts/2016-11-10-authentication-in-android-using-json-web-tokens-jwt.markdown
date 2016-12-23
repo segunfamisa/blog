@@ -357,7 +357,8 @@ This method is then called in the `onClick` method of the get quote button:
 
 **Note**
 
-  * Please note that using [Context.MODE_PRIVATE](https://developer.android.com/reference/android/content/Context.html#MODE_PRIVATE) is preferred when working with SharedPreferences as this makes the storage private to your application.
+  * Please note that the `JWT` or `token` as used here is primarily to establish identity and is hence referred to as an **Id Token**. Another use case of the `JWT` is as an **Access Token** which is used to control access to resources. To learn more on using `JWT` and `tokens` for access control and authorization, check [here](https://auth0.com/docs/tokens/access_token).  
+  * Note that using [Context.MODE_PRIVATE](https://developer.android.com/reference/android/content/Context.html#MODE_PRIVATE) is preferred when working with SharedPreferences as this makes the storage private to your application.
   * Also, [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences.html) is not recommended for saving tokens as they are stored as plain text key-value pairs.
 
 We then implement the getQuoteCallback as follows:
